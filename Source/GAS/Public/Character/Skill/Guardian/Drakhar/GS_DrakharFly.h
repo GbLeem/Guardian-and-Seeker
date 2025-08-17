@@ -14,7 +14,7 @@ public:
 	UGS_DrakharFly();
 	
 	virtual void ActiveSkill() override;
-	virtual void DeactiveSkill() override;
+	virtual void OnSkillCanceledByDebuff() override;
 	virtual void ExecuteSkillEffect() override;
 
 private:

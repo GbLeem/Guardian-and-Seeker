@@ -5,13 +5,15 @@
 #include "Character/Player/Seeker/GS_Chan.h"
 #include "Character/GS_TpsController.h"
 
+UGS_ChanRollingSkill::UGS_ChanRollingSkill()
+{
+	CurrentSkillType = ESkillSlot::Rolling;
+}
+
 void UGS_ChanRollingSkill::ActiveSkill()
 {
-	if (!CanActive())
-	{
-		return;
-	}
 	Super::ActiveSkill();
+	StartCoolDown();
 	if (AGS_Chan* OwnerPlayer = Cast<AGS_Chan>(OwnerCharacter))
 	{		
 		// 구르기 시작 사운드 재생
@@ -26,10 +28,6 @@ void UGS_ChanRollingSkill::ActiveSkill()
 			OwnerPlayer->SetSkillInputControl(false, false, false);
 			OwnerPlayer->SetMoveControlValue(false, false);
 			OwnerPlayer->CanChangeSeekerGait = false;
-			if (OwnerCharacter->GetSkillComp())
-			{
-				OwnerCharacter->GetSkillComp()->SetSkillActiveState(ESkillSlot::Rolling, true);
-			}
 			FName RollDirection = CalRollDirection();
 			if (RollDirection == FName("00"))
 			{
@@ -43,23 +41,26 @@ void UGS_ChanRollingSkill::ActiveSkill()
 	}
 }
 
-void UGS_ChanRollingSkill::DeactiveSkill()
+void UGS_ChanRollingSkill::OnSkillCanceledByDebuff()
 {
-	Super::DeactiveSkill();
+	Super::OnSkillCanceledByDebuff();
+
+	
+}
+
+void UGS_ChanRollingSkill::OnSkillAnimationEnd()
+{
+	Super::OnSkillAnimationEnd();
 
 	if (AGS_Chan* OwnerPlayer = Cast<AGS_Chan>(OwnerCharacter))
 	{
-			OwnerPlayer->Multicast_StopSkillMontage(SkillAnimMontages[0]);
-			OwnerPlayer->Multicast_SetIsFullBodySlot(false);
-			OwnerPlayer->SetSkillInputControl(true, true, true);
-			OwnerPlayer->SetMoveControlValue(true, true);
-			OwnerPlayer->CanChangeSeekerGait = true;
+		OwnerPlayer->Multicast_StopSkillMontage(SkillAnimMontages[0]);
+		OwnerPlayer->Multicast_SetIsFullBodySlot(false);
+		OwnerPlayer->SetSkillInputControl(true, true, true);
+		OwnerPlayer->SetMoveControlValue(true, true);
+		OwnerPlayer->CanChangeSeekerGait = true;
 
-			if (OwnerCharacter->GetSkillComp())
-			{
-				OwnerCharacter->GetSkillComp()->SetSkillActiveState(ESkillSlot::Rolling, false);
-			}
-
+		SetIsActive(false);
 	}
 }
 
@@ -71,6 +72,6 @@ void UGS_ChanRollingSkill::InterruptSkill()
 	{
 		AresCharacter->Multicast_SetIsFullBodySlot(false);
 		AresCharacter->SetMoveControlValue(true, true);
-		AresCharacter->GetSkillComp()->SetSkillActiveState(ESkillSlot::Rolling, false);
+		SetIsActive(false);
 	}
 }
