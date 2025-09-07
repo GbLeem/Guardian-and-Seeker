@@ -88,7 +88,7 @@ public:
 	
 	//serverRPC
 	UFUNCTION(Server, Reliable)
-	void ServerRPCMeleeAttack(AGS_Character* InDamagedCharacter);
+	void ServerRPCMeleeAttack(AGS_Character* InDamagedCharacter, float PlusDamage);
 
 	//character death play ragdoll
 	UFUNCTION(NetMulticast, Reliable)
@@ -117,7 +117,7 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulicastRPCStopCurrentSkillMontage(UAnimMontage* CurrentSkillMontage);
-
+	
 	// Impact VFX 재생
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PlayImpactVFX(UNiagaraSystem* VFXAsset, FVector Scale);

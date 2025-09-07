@@ -262,7 +262,7 @@ void AGS_Character::SetPlayerInfoWidget(UGS_PlayerInfoWidget* InPlayerInfoWidget
 		StatComp->OnCurrentHPChanged.AddUObject(InPlayerInfoWidget, &UGS_PlayerInfoWidget::OnCurrentHPBarChanged);
 	}
 }
-void AGS_Character::ServerRPCMeleeAttack_Implementation(AGS_Character* InDamagedCharacter)
+void AGS_Character::ServerRPCMeleeAttack_Implementation(AGS_Character* InDamagedCharacter, float PlusDamage)
 {
 	if (IsValid(InDamagedCharacter))
 	{
@@ -271,7 +271,8 @@ void AGS_Character::ServerRPCMeleeAttack_Implementation(AGS_Character* InDamaged
 		{
 			float Damage = DamagedCharacterStat->CalculateDamage(this, InDamagedCharacter);
 			FDamageEvent DamageEvent;
-			InDamagedCharacter->TakeDamage(Damage, DamageEvent, GetController(), this);
+			UE_LOG(LogTemp,Error, TEXT("@@@@@@@@@@@@@@ %f "), Damage + PlusDamage);
+			InDamagedCharacter->TakeDamage(Damage + PlusDamage, DamageEvent, GetController(), this);
 		}
 	}
 }

@@ -74,9 +74,6 @@ public:
 	
 	UFUNCTION(Server, Reliable)
 	void ServerRPCNewComboAttack();
-
-	UFUNCTION(Server,Reliable)
-	void ServerRPCShootEnergy();
 	
 	UFUNCTION(Server, Reliable)
 	void ServerRPCResetValue();
@@ -125,7 +122,6 @@ public:
 
 	void StartCtrl() override;
 	void StopCtrl() override;
-	
 	
 	//[Fever Mode]
 	FORCEINLINE float GetCurrentFeverGauge() const { return CurrentFeverGauge; }

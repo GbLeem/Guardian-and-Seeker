@@ -89,10 +89,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void QuitGuardianSkill();
 
-	//for debugging
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPCDrawDebugSphere(bool bIsOverlap, const FVector& Location, float CapsuleRadius);
-
 	//skill state check - client logic
 	UFUNCTION()
 	void FinishCtrlSkill();
@@ -115,6 +111,9 @@ protected:
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPCEndHitStop(AGS_Character* InDamagedCharacter);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPCPlayHitEffect(AGS_Character* DamagedCharacter);
 	
 private:
 	//hit stop duration

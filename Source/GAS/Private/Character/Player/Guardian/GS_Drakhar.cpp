@@ -289,20 +289,21 @@ void AGS_Drakhar::OnMontageNotifyBegin(FName NotifyName, const FBranchingPointNo
 
 void AGS_Drakhar::ComboLastAttack()
 {
-	//if (HasAuthority())
+	if (!HasAuthority())
 	{
 		const FVector Start = GetActorLocation();
 		const float Radius = 300.f;
 		const float PlusDamage = 20.f;
 
-		TSet<AGS_Character*> DamagedPlayers = DetectPlayerInRange(Start, 200.f, Radius);
-		ApplyDamageToDetectedPlayer(DamagedPlayers, PlusDamage);
+		TSet<AGS_Character*> DamagedCharacters = DetectPlayerInRange(Start, 200.f, Radius);
+		ApplyDamageToDetectedPlayer(DamagedCharacters, PlusDamage);
 
-		for(AGS_Character* DamagedPlayer : DamagedPlayers)
+		for(AGS_Character* DamagedCharacter : DamagedCharacters)
 		{
-			if(IsValid(DamagedPlayer))
+			if(IsValid(DamagedCharacter))
 			{
-				MulticastRPC_PlayAttackHitVFX(DamagedPlayer->GetActorLocation());
+				//MulticastRPC_PlayAttackHitVFX(DamagedPlayer->GetActorLocation());
+				ServerRPCPlayHitEffect(DamagedCharacter);
 			}
 		}
 
@@ -321,13 +322,13 @@ void AGS_Drakhar::ServerRPCResetValue_Implementation()
 void AGS_Drakhar::ServerRPCNewComboAttack_Implementation()
 {
 	bCanCombo = false;
-	MulticastRPCComboAttack();
+	MulticastRPCComboAttack(); //only show animation to other clients
 	MulticastPlayComboAttackSound();
 }
 
 void AGS_Drakhar::MulticastRPCComboAttack_Implementation()
 {
-	if (!IsLocallyControlled())
+	if (!IsLocallyControlled() && !HasAuthority())
 	{
 		PlayComboAttackMontage();
 	}
@@ -641,7 +642,7 @@ void AGS_Drakhar::MulticastRPCFeverMontagePlay_Implementation()
 void AGS_Drakhar::FeverComoLastAttack()
 {
 	//server
-	if (HasAuthority())
+	if (!HasAuthority())
 	{
 		const FVector ActorLocation = GetActorLocation() + FVector(0.f, 0.f, 20.f);
 		const FVector ForwardVector = GetActorForwardVector();
@@ -658,9 +659,7 @@ void AGS_Drakhar::FeverComoLastAttack()
 
 		TSet<AGS_Character*> DamagedSeekers;
 		FCollisionQueryParams Params(NAME_None, false, this);
-
-		TArray<FHitResult> OutHitResults;
-
+		
 		for (const FVector& PillarLocation : PillarLocations)
 		{
 			DamagedSeekers.Append(DetectPlayerInRange(PillarLocation, 0.f, PillarRadius));
@@ -668,7 +667,7 @@ void AGS_Drakhar::FeverComoLastAttack()
 		ApplyDamageToDetectedPlayer(DamagedSeekers, 20.f);
 		for (const auto& DamagedSeeker : DamagedSeekers)
 		{
-			MulticastRPC_PlayAttackHitVFX(DamagedSeeker->GetActorLocation());
+			ServerRPCPlayHitEffect(DamagedSeeker);
 			DamagedSeeker->LaunchCharacter(FVector(0.f, 0.f, 500.f), true, true);
 		}
 	}
@@ -799,10 +798,6 @@ void AGS_Drakhar::MulticastPlayFeverModeStartSound_Implementation()
 	if (SFXComponent) SFXComponent->PlayFeverModeStartSound();
 }
 
-void AGS_Drakhar::ServerRPCShootEnergy_Implementation()
-{
-	// TODO: 투사체 발사 로직 구현
-}
 
 // === 나이아가라 VFX 함수 구현 ===
 void AGS_Drakhar::MulticastStartWingRushVFX_Implementation()

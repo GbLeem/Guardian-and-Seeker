@@ -1,15 +1,16 @@
 #include "Character/Player/Guardian/GS_Guardian.h"
 #include "Character/Player/Guardian/GS_DrakharAnimInstance.h"
 #include "Animation/AnimInstance.h"
-#include "Character/Component/GS_StatComp.h"
+#include "Character/GS_Character.h"
 #include "Character/Player/Guardian/GS_Drakhar.h"
 #include "Character/Skill/GS_SkillComp.h"
 #include "Components/CapsuleComponent.h"
-#include "Engine/DamageEvents.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Character/Component/GS_CameraShakeComponent.h"
 #include "Character/Component/GS_DebuffVFXComponent.h"
+#include "Character/Component/GS_DrakharSFXComponent.h"
+#include "Character/Component/GS_DrakharVFXComponent.h"
 #include "Props/Interactables/GS_BridgePiece.h"
 #include "Components/WidgetComponent.h"
 
@@ -88,7 +89,7 @@ void AGS_Guardian::OnRep_MoveSpeed()
 
 void AGS_Guardian::MeleeAttackCheck()
 {
-	if (HasAuthority())
+	if (!HasAuthority())
 	{
 		GuardianState = EGuardianCtrlState::CtrlEnd;
 
@@ -111,9 +112,6 @@ TSet<AGS_Character*> AGS_Guardian::DetectPlayerInRange(const FVector& Start, flo
 	FVector End = Start + GetActorForwardVector() * SkillRange;
 	
 	bool bIsHitDetected = GetWorld()->SweepMultiByChannel(OutHitResults, End, End, FQuat::Identity, ECC_Pawn, FCollisionShape::MakeSphere(Radius), Params);
-
-	//FOR DEBUGGING
-	//MulticastRPCDrawDebugSphere(bIsHitDetected, End, Radius);
 	
 	if (bIsHitDetected)
 	{
@@ -145,53 +143,46 @@ TSet<AGS_Character*> AGS_Guardian::DetectPlayerInRange(const FVector& Start, flo
 
 void AGS_Guardian::ApplyDamageToDetectedPlayer(const TSet<AGS_Character*>& DamagedCharacters, float PlusDamge)
 {
-	for (auto const& DamagedCharacter : DamagedCharacters)
+	if (IsLocallyControlled())
 	{
-		//[TODO] only damage logic in server 
-		//ServerRPCMeleeAttack(DamagedCharacter);
-		
-		UGS_StatComp* DamagedCharacterStat = DamagedCharacter->GetStatComp();
-		if (IsValid(DamagedCharacterStat))
+		for (auto const& DamagedCharacter : DamagedCharacters)
 		{
-			float Damage = DamagedCharacterStat->CalculateDamage(this, DamagedCharacter);
-			FDamageEvent DamageEvent;
-			DamagedCharacter->TakeDamage(Damage + PlusDamge, DamageEvent, GetController(),this);
+			//[TODO] only damage logic in server 
+			ServerRPCMeleeAttack(DamagedCharacter, PlusDamge);
 
-			//hit stop
-			MulticastRPCApplyHitStop(DamagedCharacter);
-			
-			//server
-			AGS_Drakhar* Drakhar = Cast<AGS_Drakhar>(this);
-			
-			if (!Drakhar->GetIsFeverMode())
-			{
-				Drakhar->SetFeverGauge(10.f);
-			}
-			else if (Drakhar->GetIsFeverMode())
-			{
-				Drakhar->bIsAttckingDuringFever = true;
-				Drakhar->ResetIsAttackingDuringFeverMode();
-			}
-			
-			// === 히트 사운드 재생 (Drakhar인 경우) ===
-			if (Drakhar)
-			{
-				Drakhar->MulticastPlayAttackHitSound();
-			}
+			ServerRPCPlayHitEffect(DamagedCharacter);
+			// UGS_StatComp* DamagedCharacterStat = DamagedCharacter->GetStatComp();
+			// if (IsValid(DamagedCharacterStat))
+			// {
+			// 	float Damage = DamagedCharacterStat->CalculateDamage(this, DamagedCharacter);
+			// 	FDamageEvent DamageEvent;
+			// 	DamagedCharacter->TakeDamage(Damage + PlusDamge, DamageEvent, GetController(),this);
+			//
+			// 	//hit stop
+			// 	MulticastRPCApplyHitStop(DamagedCharacter);
+			// 	
+			// 	//server
+			// 	AGS_Drakhar* Drakhar = Cast<AGS_Drakhar>(this);
+			// 	
+			// 	if (!Drakhar->GetIsFeverMode())
+			// 	{
+			// 		Drakhar->SetFeverGauge(10.f);
+			// 	}
+			// 	else if (Drakhar->GetIsFeverMode())
+			// 	{
+			// 		Drakhar->bIsAttckingDuringFever = true;
+			// 		Drakhar->ResetIsAttackingDuringFeverMode();
+			// 	}
+			// 	
+			// 	// === 히트 사운드 재생 (Drakhar인 경우) ===
+			// 	if (Drakhar)
+			// 	{
+			// 		Drakhar->MulticastPlayAttackHitSound();
+			// 	}
+			// }
 		}
 	}
 }
-
-
-// void AGS_Guardian::OnRep_GuardianState()
-// {
-// 	ClientGuardianState = GuardianState;
-// }
-
-// void AGS_Guardian::OnRep_GuardianDoSkillState()
-// {
-// 	ClientGuardianDoSkillState = GuardianDoSkillState;
-// }
 
 void AGS_Guardian::QuitGuardianSkill()
 {
@@ -255,8 +246,8 @@ void AGS_Guardian::MulticastRPCEndHitStop_Implementation(AGS_Character* InDamage
 	}
 }
 
-void AGS_Guardian::MulticastRPCDrawDebugSphere_Implementation(bool bIsOverlap, const FVector& Location, float CapsuleRadius)
+void AGS_Guardian::ServerRPCPlayHitEffect_Implementation(AGS_Character* DamagedCharacter)
 {
-	FColor DebugColor = bIsOverlap ? FColor::Green : FColor::Red;
-	DrawDebugSphere(GetWorld(), Location,  CapsuleRadius, 16,DebugColor, false, 2.0f, 0, 1.0f);
+	//MulticastRPC_PlayAttackHitVFX(DamagedCharacter->GetActorLocation());
+	MulticastRPCApplyHitStop(DamagedCharacter);
 }
