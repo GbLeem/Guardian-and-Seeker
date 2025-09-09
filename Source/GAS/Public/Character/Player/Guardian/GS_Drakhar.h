@@ -129,7 +129,9 @@ public:
 	FORCEINLINE bool GetIsFeverMode() const {return IsFeverMode; }
 	
 	void SetFeverGaugeWidget(UGS_DrakharFeverGauge* InDrakharFeverGaugeWidget);
-	void SetFeverGauge(float InValue);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPCSetFeverGauge(float InValue);
 	void ResetIsAttackingDuringFeverMode();
 	void StartIsAttackingTimer();
 	

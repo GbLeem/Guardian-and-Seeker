@@ -133,10 +133,9 @@ float UGS_StatComp::CalculateDamage(AGS_Character* InDamageCauser, AGS_Character
 		return 0.f;
 	}
 
-	float Damage = 0.f;
 	float DamagedCharacterDefense = InDamagedCharacter->GetStatComp()->GetDefense();
 	float DamageCauserAttack = InDamageCauser->GetStatComp()->GetAttackPower();
-	Damage = (DamageCauserAttack * InSkillCoefficient) * (100.f / (100.f + SlopeCoefficient * DamagedCharacterDefense));
+	float Damage = (DamageCauserAttack * InSkillCoefficient) * (100.f / (100.f + SlopeCoefficient * DamagedCharacterDefense));
 
 	return Damage;
 }

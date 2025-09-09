@@ -258,6 +258,7 @@ void AGS_Character::SetPlayerInfoWidget(UGS_PlayerInfoWidget* InPlayerInfoWidget
 {
 	if (IsValid(InPlayerInfoWidget))
 	{
+		//asdasdasd
 		InPlayerInfoWidget->InitializePlayerInfoWidget(Cast<AGS_Player>(this));
 		StatComp->OnCurrentHPChanged.AddUObject(InPlayerInfoWidget, &UGS_PlayerInfoWidget::OnCurrentHPBarChanged);
 	}
@@ -271,7 +272,6 @@ void AGS_Character::ServerRPCMeleeAttack_Implementation(AGS_Character* InDamaged
 		{
 			float Damage = DamagedCharacterStat->CalculateDamage(this, InDamagedCharacter);
 			FDamageEvent DamageEvent;
-			UE_LOG(LogTemp,Error, TEXT("@@@@@@@@@@@@@@ %f "), Damage + PlusDamage);
 			InDamagedCharacter->TakeDamage(Damage + PlusDamage, DamageEvent, GetController(), this);
 		}
 	}

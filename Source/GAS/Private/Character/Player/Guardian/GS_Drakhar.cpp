@@ -235,7 +235,6 @@ void AGS_Drakhar::LeftMouse()
 		{
 			if (bCanCombo)
 			{
-				bCanCombo = false;
 				PlayComboAttackMontage();
 				ServerRPCNewComboAttack();
 			}
@@ -302,7 +301,6 @@ void AGS_Drakhar::ComboLastAttack()
 		{
 			if(IsValid(DamagedCharacter))
 			{
-				//MulticastRPC_PlayAttackHitVFX(DamagedPlayer->GetActorLocation());
 				ServerRPCPlayHitEffect(DamagedCharacter);
 			}
 		}
@@ -325,7 +323,7 @@ void AGS_Drakhar::ServerRPCNewComboAttack_Implementation()
 	MulticastRPCComboAttack(); //only show animation to other clients
 	MulticastPlayComboAttackSound();
 }
-
+	
 void AGS_Drakhar::MulticastRPCComboAttack_Implementation()
 {
 	if (!IsLocallyControlled() && !HasAuthority())
@@ -582,7 +580,7 @@ void AGS_Drakhar::SetFeverGaugeWidget(UGS_DrakharFeverGauge* InDrakharFeverGauge
 	}
 }
 
-void AGS_Drakhar::SetFeverGauge(float InValue)
+void AGS_Drakhar::ServerRPCSetFeverGauge_Implementation(float InValue)
 {	
 	//server
 	if (HasAuthority())
@@ -697,12 +695,12 @@ void AGS_Drakhar::MinusFeverGaugeValue()
 		//공격 유지 안된 경우
 		if (!bIsAttckingDuringFever)
 		{
-			SetFeverGauge(-5.f);
+			ServerRPCSetFeverGauge(-5.f);
 		}
 	}
 	else
 	{
-		SetFeverGauge(-1.f);
+		ServerRPCSetFeverGauge(-1.f);
 	}
 }
 

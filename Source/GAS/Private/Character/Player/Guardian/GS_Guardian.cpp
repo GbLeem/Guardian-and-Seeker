@@ -89,7 +89,7 @@ void AGS_Guardian::OnRep_MoveSpeed()
 
 void AGS_Guardian::MeleeAttackCheck()
 {
-	if (!HasAuthority())
+	if (IsLocallyControlled())
 	{
 		GuardianState = EGuardianCtrlState::CtrlEnd;
 
@@ -111,7 +111,8 @@ TSet<AGS_Character*> AGS_Guardian::DetectPlayerInRange(const FVector& Start, flo
 
 	FVector End = Start + GetActorForwardVector() * SkillRange;
 	
-	bool bIsHitDetected = GetWorld()->SweepMultiByChannel(OutHitResults, End, End, FQuat::Identity, ECC_Pawn, FCollisionShape::MakeSphere(Radius), Params);
+	bool bIsHitDetected = GetWorld()->SweepMultiByChannel(OutHitResults, End, End, FQuat::Identity,
+		ECC_Pawn, FCollisionShape::MakeSphere(Radius), Params);
 	
 	if (bIsHitDetected)
 	{
@@ -137,7 +138,6 @@ TSet<AGS_Character*> AGS_Guardian::DetectPlayerInRange(const FVector& Start, flo
 			}
 		}
 	}
-
 	return DamagedPlayers;
 }
 
@@ -147,39 +147,21 @@ void AGS_Guardian::ApplyDamageToDetectedPlayer(const TSet<AGS_Character*>& Damag
 	{
 		for (auto const& DamagedCharacter : DamagedCharacters)
 		{
-			//[TODO] only damage logic in server 
 			ServerRPCMeleeAttack(DamagedCharacter, PlusDamge);
-
 			ServerRPCPlayHitEffect(DamagedCharacter);
-			// UGS_StatComp* DamagedCharacterStat = DamagedCharacter->GetStatComp();
-			// if (IsValid(DamagedCharacterStat))
-			// {
-			// 	float Damage = DamagedCharacterStat->CalculateDamage(this, DamagedCharacter);
-			// 	FDamageEvent DamageEvent;
-			// 	DamagedCharacter->TakeDamage(Damage + PlusDamge, DamageEvent, GetController(),this);
-			//
-			// 	//hit stop
-			// 	MulticastRPCApplyHitStop(DamagedCharacter);
-			// 	
-			// 	//server
-			// 	AGS_Drakhar* Drakhar = Cast<AGS_Drakhar>(this);
-			// 	
-			// 	if (!Drakhar->GetIsFeverMode())
-			// 	{
-			// 		Drakhar->SetFeverGauge(10.f);
-			// 	}
-			// 	else if (Drakhar->GetIsFeverMode())
-			// 	{
-			// 		Drakhar->bIsAttckingDuringFever = true;
-			// 		Drakhar->ResetIsAttackingDuringFeverMode();
-			// 	}
-			// 	
-			// 	// === 히트 사운드 재생 (Drakhar인 경우) ===
-			// 	if (Drakhar)
-			// 	{
-			// 		Drakhar->MulticastPlayAttackHitSound();
-			// 	}
-			// }
+			
+			//server
+			AGS_Drakhar* Drakhar = Cast<AGS_Drakhar>(this);
+			
+			if (!Drakhar->GetIsFeverMode())
+			{
+				Drakhar->ServerRPCSetFeverGauge(10.f);
+			}
+			else if (Drakhar->GetIsFeverMode())
+			{
+				Drakhar->bIsAttckingDuringFever = true;
+				Drakhar->ResetIsAttackingDuringFeverMode();
+			}
 		}
 	}
 }
